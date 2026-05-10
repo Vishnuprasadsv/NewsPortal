@@ -1,5 +1,12 @@
 import express from 'express';
-import { getNews, getAdminNews, getNewsById, createNews, updateNews, deleteNews} from '../controllers/newsController.js';
+import { 
+  getNews, 
+  getAdminNews,
+  getNewsById, 
+  createNews, 
+  updateNews, 
+  deleteNews 
+} from '../controllers/newsController.js';
 import { protect } from '../middleware/authMiddleware.js';
 
 const router = express.Router();

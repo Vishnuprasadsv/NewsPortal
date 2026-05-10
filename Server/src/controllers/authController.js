@@ -1,80 +1,72 @@
 import User from '../models/User.js';
 import jwt from 'jsonwebtoken';
-import bcrypt from 'bcrypt'
-import { use } from 'react';
 
-// generating jsonwebtoken
- const Token = (id) => {
-    return jwt.sign({id}, process.env.JWT_SECRET, {
-        expiresIn: '30d',
-    });
- };
- 
-
-//  User Registration 
-export const registerUser = async (req, res) => {
-    try{
-        const {email, password, firstName, lastName, role} = req.body;
-        
-// checking if the user already exists
-        const userExists = await User.findOne({ email });
-
-        if(userExists) {
-            return res.status(400).json({message : 'User already exists'});
-        }
-
-        const user = await User.create({
-            email,
-            password,
-            firstName: firstName || 'Content',
-            lastName: lastName || 'Creator',
-            role: role || 'writer'
-        });
-
-        if(user) {
-          res.status(201).json({
-            _id: user._id,
-            email: user.email,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            role:user.bio,
-            token: generateToken(user._id)
-          });
-        } else {
-            res.status(400).json({message: 'Invalid user data'});
-        }
-    } catch (error) {
-        res.status(500).json({message: error.message});
-    }
+// Generate JWT
+const generateToken = (id) => {
+  return jwt.sign({ id }, process.env.JWT_SECRET, {
+    expiresIn: '30d',
+  });
 };
 
-// user authentication
+export const registerUser = async (req, res) => {
+  try {
+    const { email, password, firstName, lastName, role } = req.body;
+
+    const userExists = await User.findOne({ email });
+
+    if (userExists) {
+      return res.status(400).json({ message: 'User already exists' });
+    }
+
+    const user = await User.create({
+      email,
+      password,
+      firstName: firstName || 'Content',
+      lastName: lastName || 'Creator',
+      role: role || 'writer'
+    });
+
+    if (user) {
+      res.status(201).json({
+        _id: user._id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role,
+        bio: user.bio,
+        token: generateToken(user._id)
+      });
+    } else { 
+      res.status(400).json({ message: 'Invalid user data' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 
 export const authenticateUser = async (req, res) => {
-    try {
-        const {email, password} = req.body;
+  try {
+    const { email, password } = req.body;
 
-        const user = await User.findOne({email});
+    const user = await User.findOne({ email });
 
-        if(user && (await user.comparePassword(password))) {
-            res.json({
-                _id: user._id,
-                email: user.email,
-                firstName: user.firstName,
-                lastName: user.lastName,
-                role: user.role,
-                bio: user.bio,
-                token: generateToken(user._id)
-            })
-        } else {
-            res.status(401).json({message: 'invalid email or password'});
-        }
-    } catch (error) {
-        res.status(500).json({message: error.message});
+    if (user && (await user.comparePassword(password))) {
+      res.json({
+        _id: user._id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role,
+        bio: user.bio,
+        token: generateToken(user._id)
+      });
+    } else {
+      res.status(401).json({ message: 'Invalid email or password' });
     }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
-
-// getting the current logged in users information 
 
 export const getProfile = async (req, res) => {
   try {
@@ -89,9 +81,6 @@ export const getProfile = async (req, res) => {
   }
 };
 
-
-// updating the profile 
-
 export const updateProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
@@ -105,8 +94,8 @@ export const updateProfile = async (req, res) => {
       user.bio = req.body.bio !== undefined ? req.body.bio : user.bio;
       
       if (req.body.password && req.body.currentPassword) {
-    
-        // Verify current password
+        
+        // Verify current password first
         const isMatch = await user.comparePassword(req.body.currentPassword);
         if (!isMatch) {
           return res.status(400).json({ message: 'Current password is incorrect' });
